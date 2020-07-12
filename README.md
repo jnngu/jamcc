@@ -1,5 +1,6 @@
 # jamcc
 A Compiler written for a small subset of C written in Rust.
+Written following [this tutorial.](https://norasandler.com/2017/11/29/Write-a-Compiler.html)
 
 
 ## Why?
