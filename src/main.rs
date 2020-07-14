@@ -1,15 +1,14 @@
 mod lexer;
+use std::env;
+
+//TODO: Put printlns into a debug macro
 
 fn main() {
-     let text = "int main(){return 100;}";
- /*   let re = Regex::new(r"^\{|\}|\(|\)|;|int|return|[a-zA-Z]\w*|\d+|$").unwrap();
+    let args: Vec<String> = env::args().collect();
+    let contents = lexer::read_file(&args[1]);
+    println!("Contents:\n {}", contents);
 
-    //fix this when i know more about iterators xd
-    let test:Vec<String> = re.find_iter(text).filter_map(|x| x.as_str().parse().ok()).collect(); 
-     */
-    let test:Vec<String> = lexer::parse_string(text);
-    for x in &test {
-        println!("{}", x);
-    }
+    let symbol_vec:Vec<String> = lexer::parse_string(&contents);
+    println!("{:?}", &symbol_vec);
 }
 
