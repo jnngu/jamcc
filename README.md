@@ -1,6 +1,17 @@
 # jamcc
 A Compiler written for a small subset of C written in Rust.
 
+## How do you run it?
+To call the compiler run:
+```
+target/release/jamcc <.c file>
+```
+It will generate a test.s file in your current directory. Then you can call 
+```
+gcc test.s
+```
+to generate an a.out binary that you can run.
+
 ## Why?
 I was inspired by my team's work on a [custom-kinda-brainfuck compiler for a hackathon.](https://github.com/brandonspark/Runtime) 
 
