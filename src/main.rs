@@ -1,5 +1,6 @@
 mod parser;
 mod lexer;
+mod codegen;
 
 use std::env;
 use std::collections::VecDeque;
@@ -14,7 +15,7 @@ fn main() {
     //println!("{:?}", &symbol_vec);
     //lexer::print_tokens(symbol_vec);
 
-    parser::parse_program(symbol_vec);
+    let parsed_prog:parser::prog = parser::parse_program(symbol_vec);
 
 /*     let mut test = String::from("aaaaa");
     while(!(test.is_empty()))
@@ -22,5 +23,7 @@ fn main() {
         test = test.replacen("a", "", 1);
         println!("{}", test);
     } */
+
+    codegen::generate_code(parsed_prog);
 } 
 
