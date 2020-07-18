@@ -12,7 +12,7 @@ fn main() {
     println!("Contents:\n {}", contents);
 
     let symbol_vec:VecDeque<lexer::Token> = lexer::parse_string(&contents);
-
+    println!("{:?}", symbol_vec);
     let parsed_prog:parser::prog = parser::parse_program(symbol_vec);
     
     codegen::generate_code(parsed_prog);

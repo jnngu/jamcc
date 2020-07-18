@@ -77,7 +77,7 @@ pub fn parse_fun_decl(mut token_vec: VecDeque<lexer::Token>) -> fun_decl
     match tok
     {
         Some(lexer::Token::ClosedBrace) => println!("ClosedBrace"),
-        _ => lexer::print_tokens(&token_vec),
+        _ => println!("{:?}", token_vec),
     }     
 
 

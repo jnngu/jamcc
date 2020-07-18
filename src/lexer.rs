@@ -1,7 +1,9 @@
 use regex::Regex;
 use std::fs;
 use std::collections::VecDeque;
+use std::fmt;
 
+#[derive(Debug)]
  pub enum Token {
     OpenBrace,
     ClosedBrace,
@@ -21,36 +23,26 @@ pub fn read_file(file_name: &str) -> String
     contents
 } 
 
-pub fn print_tokens(x: &VecDeque<Token>) -> ()
+impl fmt::Display for Token
 {
-    let mut index = 0;
-    let length = x.len()-1;
-    print!("[");
-    for elem in x
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result
     {
-        match elem
+        match self
         {
-            Token::OpenBrace => print!("OpenBrace"),
-            Token::ClosedBrace => print!("ClosedBrace"),
-            Token::OpenParen =>  print!("OpenParen"),
-            Token::ClosedParen => print!("ClosedParen"),
-            Token::Semicolon => print!("Semicolon"),
-            Token::IntKeyword => print!("IntKeyword"),
-            Token::ReturnKeyword => print!("ReturnKeyWord"),
-            Token::Identifier(s) => print!("Identifier({})", s),
-            Token::IntegerLiteral(i) => print!("Integer({})", i),
+            Token::OpenBrace => write!(f,"OpenBrace"),
+            Token::ClosedBrace => write!(f,"ClosedBrace"),
+            Token::OpenParen =>  write!(f,"OpenParen"),
+            Token::ClosedParen => write!(f,"ClosedParen"),
+            Token::Semicolon => write!(f,"Semicolon"),
+            Token::IntKeyword => write!(f,"IntKeyword"),
+            Token::ReturnKeyword => write!(f,"ReturnKeyWord"),
+            Token::Identifier(s) => write!(f,"Identifier({})", s),
+            Token::IntegerLiteral(i) => write!(f,"Integer({})", i),
             _ => panic!("Invalid token"),
-
         }
-        if index != length
-        {
-            index = index + 1;
-            print!(", ");
-        }
-
     }
-    println!("]");
-} 
+}
+
 
 pub fn parse_string(x: &str) -> VecDeque<Token>
 {
