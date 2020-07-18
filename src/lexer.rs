@@ -21,7 +21,7 @@ pub fn read_file(file_name: &str) -> String
     contents
 } 
 
-pub fn print_tokens(x: VecDeque<Token>) -> ()
+pub fn print_tokens(x: &VecDeque<Token>) -> ()
 {
     let mut index = 0;
     let length = x.len()-1;
@@ -54,15 +54,15 @@ pub fn print_tokens(x: VecDeque<Token>) -> ()
 
 pub fn parse_string(x: &str) -> VecDeque<Token>
 {
-    let re = Regex::new(r#"\A\{|\A\}|\A\(|\A\)|\A;"#).unwrap();
-    let int_reg = Regex::new(r#"\A[0-9]+"#).unwrap();
-    let char_reg = Regex::new(r#"\A[a-zA-Z]\w*"#).unwrap();
+    let re = Regex::new(r#"^\{|^\}|^\(|^\)|^;"#).unwrap();
+    let int_reg = Regex::new(r#"^[0-9]+"#).unwrap();
+    let char_reg = Regex::new(r#"^[a-zA-Z]\w*"#).unwrap();
 
     let mut matches:VecDeque<Token> = VecDeque::new();
     //fix this when i know more about iterators xd
 
 
-    let mut temp = String::from(x);
+    let mut temp = String::from(x.trim_start());
     while !(&temp.is_empty())
     {
         let next_match;
@@ -98,7 +98,7 @@ pub fn parse_string(x: &str) -> VecDeque<Token>
         }
         else
         {
-            println!("invalid");
+            panic!("invalid");
             break;
         }
         temp = temp.replacen(next_match, "", 1).trim_start().to_string();
