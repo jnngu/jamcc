@@ -15,6 +15,6 @@ fn main() {
     println!("{:?}", symbol_vec);
     let parsed_prog:parser::prog = parser::parse_program(symbol_vec);
     
-    codegen::generate_code(parsed_prog);
+    codegen::generate_program(parsed_prog, &args[1]);
 } 
 
