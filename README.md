@@ -4,11 +4,11 @@ A Compiler written for a small subset of C written in Rust.
 ## How do you run it?
 To call the compiler run:
 ```
-target/release/jamcc <.c file>
+target/release/jamcc <file-name>.c
 ```
-It will generate a test.s file in your current directory. Then you can call 
+It will generate a <file-name>.s file in your current directory. Then you can call 
 ```
-gcc test.s
+gcc <file-name>.s
 ```
 to generate an a.out binary that you can run.
 
