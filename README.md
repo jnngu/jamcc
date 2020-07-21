@@ -1,5 +1,5 @@
 # jamcc
-A Compiler written for a small subset of C written in Rust.
+A compiler written for a small subset of C written in Rust.
 
 ## How do you run it?
 To call the compiler run:
