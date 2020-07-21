@@ -6,6 +6,7 @@ To call the compiler run:
 ```
 target/release/jamcc <file-name>.c
 ```
+To enable debug printing you can add the `--features debug` flag.
 It will generate a <file-name>.s file in your current directory. Then you can call 
 ```
 gcc <file-name>.s
