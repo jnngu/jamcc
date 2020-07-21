@@ -3,6 +3,7 @@ use std::fs;
 use std::collections::VecDeque;
 use std::fmt;
 #[derive(Debug)]
+#[derive(PartialEq)]
  pub enum Token {
     OpenBrace,
     ClosedBrace,
