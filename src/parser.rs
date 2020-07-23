@@ -1,16 +1,47 @@
 use std::collections::VecDeque;
 use crate::lexer;
 use std::fmt;
+
+
 #[derive(Debug)]
-pub enum Exp {Const(i32)}
+pub enum Exp {UnOp(Operator, Box<Exp>), Const(i32)}
 #[derive(Debug)]
 pub enum Statement {Return(Exp)}
 #[derive(Debug)]
 pub enum FunDecl {Fun(String, Statement)}
 #[derive(Debug)]
 pub enum Program {Prog(FunDecl)}
+#[derive(Debug)]
+pub enum Operator
+{
+    Negation,
+    Complement,
+    LogNegation,
+}
 
-pub fn parse_exp (token_vec:&mut VecDeque<lexer::Token>) -> Exp
+pub fn get_operator(token: lexer::Token) -> Operator
+{
+    match token
+    {
+        lexer::Token::Negation => 
+        {
+            debug_print!("Negation");
+            Operator::Negation
+        },
+        lexer::Token::Complement => 
+        {
+            debug_print!("Complement");
+            Operator::Complement},
+        lexer::Token::LogNegation => 
+        {
+            debug_print!("LogicalNegation");
+            Operator::LogNegation
+        },
+        _ => panic!("not valid operator"),
+    }
+}
+
+pub fn parse_exp (mut token_vec:&mut VecDeque<lexer::Token>) -> Exp
 {
     //<Int>
     let tok = token_vec.pop_front();
@@ -21,7 +52,13 @@ pub fn parse_exp (token_vec:&mut VecDeque<lexer::Token>) -> Exp
             debug_print!("IntegerLiteral({})", n);
             return Exp::Const(n)
         },
-        _ => panic!("not valid return keyword"),
+        Some(token) =>
+        {
+            let op = get_operator(token);
+            let inner_exp = parse_exp(&mut token_vec);
+            return Exp::UnOp(op, Box::new(inner_exp))
+        },
+        _ => panic!("not valid expression, NONE"),
     }   
 } 
 
@@ -134,7 +171,22 @@ impl fmt::Display for Exp
         match self
         {
             Exp::Const(n) => write!(f, "Int<{}>\n", n),
+            Exp::UnOp(x,y) => write!(f, "UnOp<{}> {}", x, *y),
             _ => panic!("invalid expression"),
+        }
+    }
+}
+
+impl fmt::Display for Operator
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result
+    {
+        match self
+        {
+            Operator::Negation => write!(f, "Negation"),
+            Operator::Complement => write!(f, "Complement"),
+            Operator::LogNegation => write!(f, "LogNegation"),
+            _ => panic!("invalid operator"),
         }
     }
 }

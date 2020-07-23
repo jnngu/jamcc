@@ -14,6 +14,9 @@ use std::fmt;
     ReturnKeyword,
     Identifier(String),
     IntegerLiteral(i32),
+    Negation,
+    Complement,
+    LogNegation,
 }
  
 
@@ -25,7 +28,7 @@ pub fn read_file(file_name: &str) -> String
 
 pub fn parse_string(x: &str) -> VecDeque<Token>
 {
-    let re = Regex::new(r#"^\{|^\}|^\(|^\)|^;"#).unwrap();
+    let re = Regex::new(r#"^\{|^\}|^\(|^\)|^;|^-|^~|^!"#).unwrap();
     let int_reg = Regex::new(r#"^[0-9]+"#).unwrap();
     let char_reg = Regex::new(r#"^[a-zA-Z]\w*"#).unwrap();
 
@@ -44,6 +47,9 @@ pub fn parse_string(x: &str) -> VecDeque<Token>
                 "(" => matches.push_back(Token::OpenParen),
                 ")" => matches.push_back(Token::ClosedParen),
                 ";" => matches.push_back(Token::Semicolon),
+                "-" => matches.push_back(Token::Negation),
+                "~" => matches.push_back(Token::Complement),
+                "!" => matches.push_back(Token::LogNegation),
                 _ => panic!("not a valid token"),
             }
             debug_print!("{}", next_match);
@@ -89,6 +95,9 @@ impl fmt::Display for Token
             Token::ReturnKeyword => write!(f,"ReturnKeyWord"),
             Token::Identifier(s) => write!(f,"Identifier({})", s),
             Token::IntegerLiteral(i) => write!(f,"Integer({})", i),
+            Token::Negation => write!(f, "Negation"),
+            Token::Complement => write!(f, "Complement"),
+            Token::LogNegation => write!(f, "Logical Negation"),
             _ => panic!("Invalid token"),
         }
     }
