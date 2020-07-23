@@ -32,4 +32,4 @@ int main()
 7/23/2020: It now supports certain binary operators such as: -, ~, and !.
 
 ## What's next?
-Next up is adding binary operators like +, -, *, /. Stay tooned.
+Next up is adding binary operators like +, -, *, /. Stay tuned.
