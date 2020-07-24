@@ -14,9 +14,12 @@ use std::fmt;
     ReturnKeyword,
     Identifier(String),
     IntegerLiteral(i32),
-    Negation,
+    Minus,
     Complement,
     LogNegation,
+    Addition,
+    Multiplication,
+    Division,
 }
  
 
@@ -28,7 +31,7 @@ pub fn read_file(file_name: &str) -> String
 
 pub fn parse_string(x: &str) -> VecDeque<Token>
 {
-    let re = Regex::new(r#"^\{|^\}|^\(|^\)|^;|^-|^~|^!"#).unwrap();
+    let re = Regex::new(r#"^\{|^\}|^\(|^\)|^;|^-|^~|^!|^\+|^\*|^/"#).unwrap();
     let int_reg = Regex::new(r#"^[0-9]+"#).unwrap();
     let char_reg = Regex::new(r#"^[a-zA-Z]\w*"#).unwrap();
 
@@ -47,10 +50,13 @@ pub fn parse_string(x: &str) -> VecDeque<Token>
                 "(" => matches.push_back(Token::OpenParen),
                 ")" => matches.push_back(Token::ClosedParen),
                 ";" => matches.push_back(Token::Semicolon),
-                "-" => matches.push_back(Token::Negation),
+                "-" => matches.push_back(Token::Minus),
                 "~" => matches.push_back(Token::Complement),
                 "!" => matches.push_back(Token::LogNegation),
-                _ => panic!("not a valid token"),
+                "+" => matches.push_back(Token::Addition),
+                "*" => matches.push_back(Token::Multiplication),
+                "/" => matches.push_back(Token::Division),
+                _ => panic!("{} is not a valid token", next_match),
             }
             debug_print!("{}", next_match);
         }
@@ -95,9 +101,12 @@ impl fmt::Display for Token
             Token::ReturnKeyword => write!(f,"ReturnKeyWord"),
             Token::Identifier(s) => write!(f,"Identifier({})", s),
             Token::IntegerLiteral(i) => write!(f,"Integer({})", i),
-            Token::Negation => write!(f, "Negation"),
+            Token::Minus => write!(f, "Minus"),
             Token::Complement => write!(f, "Complement"),
             Token::LogNegation => write!(f, "Logical Negation"),
+            Token::Addition => write!(f, "Addition"),
+            Token::Multiplication => write!(f, "Multiplication"),
+            Token::Division => write!(f, "Division"),
             _ => panic!("Invalid token"),
         }
     }

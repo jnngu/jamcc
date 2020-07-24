@@ -54,7 +54,16 @@ pub fn generate_exp(expr: parser::Exp, mut f: &File,  filename: &str) -> ()
         parser::Exp::UnOp(op, wrapExp) =>
         {
             generate_exp(*wrapExp, &f, filename);
-            generate_op(op, &f, filename);
+            generate_unop(op, &f, filename);
+        }
+        parser::Exp::BinOp(op, exp1, exp2) =>
+        {
+            generate_exp(*exp1, &f, filename);
+            f.write_all(format!("	push    %rax\n").as_bytes()).unwrap();
+            generate_exp(*exp2, &f, filename);
+            f.write_all(format!("	movl    %eax, %ecx\n").as_bytes()).unwrap();
+            f.write_all(format!("	pop     %rax\n").as_bytes()).unwrap();
+            generate_binop(op, &f, filename);
         }
         _ => 
         { 
@@ -66,24 +75,39 @@ pub fn generate_exp(expr: parser::Exp, mut f: &File,  filename: &str) -> ()
     }
 }
 
-pub fn generate_op(op: parser::Operator, mut f: &File, filename: &str) -> ()
+pub fn generate_unop(op: parser::UnaryOp, mut f: &File, filename: &str) -> ()
 {
     match op
     {
-        parser::Operator::Negation => f.write_all(format!("    neg     %eax\n").as_bytes()).unwrap(),
-        parser::Operator::Complement => f.write_all(format!("    not     %eax\n").as_bytes()).unwrap(),
-        parser::Operator::LogNegation => 
+        parser::UnaryOp::Negation => f.write_all(format!("    neg     %eax\n").as_bytes()).unwrap(),
+        parser::UnaryOp::Complement => f.write_all(format!("    not     %eax\n").as_bytes()).unwrap(),
+        parser::UnaryOp::LogNegation => 
         {
             f.write_all(format!("    cmpl    $0, %eax\n").as_bytes()).unwrap();
             f.write_all(format!("    movl    $0, %eax\n").as_bytes()).unwrap();
             f.write_all(format!("    sete    %al\n").as_bytes()).unwrap();
         },
-        _=> parse_error("Not a valid operator", filename),
+        _=> parse_error("Not a valid UnaryOp", filename),
     }
 }
 
+pub fn generate_binop(op:parser::BinaryOp, mut f: &File, filename: &str) -> ()
+{
+    match op
+    {
+        parser::BinaryOp::Addition => f.write_all(format!("    addl    %ecx, %eax\n").as_bytes()).unwrap(),
+        parser::BinaryOp::Subtraction => f.write_all(format!("    subl    %ecx, %eax\n").as_bytes()).unwrap(),
+        parser::BinaryOp::Multiplication => f.write_all(format!("    imul    %ecx, %eax\n").as_bytes()).unwrap(),
+        parser::BinaryOp::Division => 
+        {
+            f.write_all(format!("    xor     %rdx, %rdx\n").as_bytes()).unwrap();
+            f.write_all(format!("    idivl   %ecx, %eax\n").as_bytes()).unwrap();
+        },
+        _=> parse_error("Not a valid binary op", filename),
+    }
+}
 pub fn parse_error(s: &str, filename: &str) -> ()
 {
-    fs::remove_file(filename.replace(".c", ".s"));
+    fs::remove_file(filename.replace(".c", ".s")).expect("file remove error");
     panic!("{}", s)
 }
