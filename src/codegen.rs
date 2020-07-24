@@ -100,7 +100,7 @@ pub fn generate_binop(op:parser::BinaryOp, mut f: &File, filename: &str) -> ()
         parser::BinaryOp::Multiplication => f.write_all(format!("    imul    %ecx, %eax\n").as_bytes()).unwrap(),
         parser::BinaryOp::Division => 
         {
-            f.write_all(format!("    xor     %rdx, %rdx\n").as_bytes()).unwrap();
+            f.write_all(format!("    cdq\n").as_bytes()).unwrap();
             f.write_all(format!("    idivl   %ecx, %eax\n").as_bytes()).unwrap();
         },
         _=> parse_error("Not a valid binary op", filename),

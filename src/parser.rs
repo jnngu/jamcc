@@ -92,7 +92,7 @@ pub fn parse_muldiv(mut token_vec: &mut VecDeque<lexer::Token>) -> Exp
 
 pub fn parse_addsub(mut token_vec: &mut VecDeque<lexer::Token>) -> Exp
 {
-    let mut term = parse_muldiv(&mut token_vec);
+    let mut term = parse_muldiv(&mut token_vec); // 2 + 3 * 4
     let mut next = token_vec.get(0).expect("empty token vector list");
     while let lexer::Token::Addition | lexer::Token::Minus = next
     {
