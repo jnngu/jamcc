@@ -29,7 +29,7 @@ int main()
     }
 ```
 
-7/22/2020: It now supports certain unary operators such as: -, ~, and !.
+7/22/2020: It now supports certain unary operators such as: -, ~, and !. \
 7/23/2020: It now supports certain binary operators such as: +, -, *, /.
 
 ## What's next?
