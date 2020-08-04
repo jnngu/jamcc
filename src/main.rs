@@ -18,6 +18,7 @@ fn main() {
     debug_print!("Parser:");
     let parsed_prog:parser::Program = parser::parse_program(&mut symbol_vec);
     debug_print!("\nParser Output: \n{}\n", parsed_prog);
-    codegen::generate_program(parsed_prog, &args[1]);
+    let jump_count_ptr: Box<u32> = Box::new(0);
+    codegen::generate_program(parsed_prog, &args[1], jump_count_ptr);
 } 
 

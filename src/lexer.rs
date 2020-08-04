@@ -28,6 +28,7 @@ use std::fmt;
     LessThanOrEq,
     GreaterThan,
     GreaterThanOrEq,
+    Assignment,
 }
  
 
@@ -39,7 +40,7 @@ pub fn read_file(file_name: &str) -> String
 
 pub fn parse_string(x: &str) -> VecDeque<Token>
 {
-    let re = Regex::new(r#"^\{|^\}|^\(|^\)|^;|^-|^~|^\+|^\*|^/|^&&|^\|\||^==|^!=|^<=|^<|^>=|^>|^!"#).unwrap();
+    let re = Regex::new(r#"^\{|^\}|^\(|^\)|^;|^-|^~|^\+|^\*|^/|^&&|^\|\||^==|^!=|^<=|^<|^>=|^>|^!|^="#).unwrap();
     let int_reg = Regex::new(r#"^[0-9]+"#).unwrap();
     let char_reg = Regex::new(r#"^[a-zA-Z]\w*"#).unwrap();
 
@@ -73,6 +74,7 @@ pub fn parse_string(x: &str) -> VecDeque<Token>
                 "<" =>  matches.push_back(Token::LessThan),
                 "<=" =>  matches.push_back(Token::LessThanOrEq),
                 ">=" =>  matches.push_back(Token::GreaterThanOrEq),
+                "=" => matches.push_back(Token::Assignment),
                 _ => panic!("{} is not a valid token", next_match),
             }
             debug_print!("{}", next_match);
@@ -133,6 +135,7 @@ impl fmt::Display for Token
             Token::LessThanOrEq => write!(f, "LessThanOrEq"),
             Token::GreaterThan => write!(f, "GreaterThan"),
             Token::GreaterThanOrEq => write!(f, "GreaterThanOrEq"),
+            Token::Assignment => write!(f, "Assignment"),
             _ => panic!("Invalid token"),
         }
     }
