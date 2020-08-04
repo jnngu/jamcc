@@ -2,10 +2,14 @@ use crate::parser;
 use std::fs::File;
 use std::fs;
 use std::io::prelude::*;
-//TODO: generate file at very end instead of beginning
+
+//TODO: pass in Box<counter> instead of this global variables jankness
+static mut CLAUSE_COUNTER: u32 = 0; 
+static mut END_COUNTER: u32 = 0;
+
 pub fn generate_program(program: parser::Program, filename: &str) -> ()
 {
-    let mut f = File::create(filename.replace(".c", ".s")).unwrap();
+    let f = File::create(filename.replace(".c", ".s")).unwrap();
 
     match program
     {
@@ -51,11 +55,55 @@ pub fn generate_exp(expr: parser::Exp, mut f: &File,  filename: &str) -> ()
         {
             f.write_all(format!("	movl    ${}, %eax\n", num).as_bytes()).unwrap();
         },
-        parser::Exp::UnOp(op, wrapExp) =>
+        parser::Exp::UnOp(op, wrap_exp) =>
         {
-            generate_exp(*wrapExp, &f, filename);
+            generate_exp(*wrap_exp, &f, filename);
             generate_unop(op, &f, filename);
-        }
+        },
+        parser::Exp::BinOp(parser::BinaryOp::LogOr, exp1, exp2) =>
+        {
+
+            unsafe //TODO: pass in Box<counter> instead of this global variables jankness
+            {
+                let current_count = CLAUSE_COUNTER;
+                let current_end = END_COUNTER;
+                CLAUSE_COUNTER += 1;
+                END_COUNTER += 1;
+            
+            generate_exp(*exp1, &f, filename);
+            f.write_all(format!("	cmpl    $0, %eax\n").as_bytes()).unwrap();
+            f.write_all(format!("	je _clause{}\n", &current_count).as_bytes()).unwrap();
+            f.write_all(format!("	movl    $1, %eax\n").as_bytes()).unwrap();
+            f.write_all(format!("	jmp _end{}\n", &current_end).as_bytes()).unwrap();
+            f.write_all(format!("_clause{}:\n", &current_count).as_bytes()).unwrap();
+            generate_exp(*exp2, &f, filename);
+            f.write_all(format!("	cmpl    $0, %eax\n").as_bytes()).unwrap();
+            f.write_all(format!("	movl    $0, %eax\n").as_bytes()).unwrap();
+            f.write_all(format!("	setne   %al\n").as_bytes()).unwrap();
+            f.write_all(format!("_end{}:\n",&current_end).as_bytes()).unwrap();
+            }
+        },
+        parser::Exp::BinOp(parser::BinaryOp::LogAnd, exp1, exp2) =>
+        {
+            unsafe //TODO: pass in Box<counter> instead of this global variables jankness
+            {
+                let current_count = CLAUSE_COUNTER;
+                let current_end = END_COUNTER;
+                CLAUSE_COUNTER += 1;
+                END_COUNTER += 1;
+            
+            generate_exp(*exp1, &f, filename);
+            f.write_all(format!("	cmpl    $0, %eax\n").as_bytes()).unwrap();
+            f.write_all(format!("	jne _clause{}\n", &current_count).as_bytes()).unwrap();
+            f.write_all(format!("	jmp _end{}\n", &current_end).as_bytes()).unwrap();
+            f.write_all(format!("_clause{}:\n", &current_count).as_bytes()).unwrap();
+            generate_exp(*exp2, &f, filename);
+            f.write_all(format!("	cmpl    $0, %eax\n").as_bytes()).unwrap();
+            f.write_all(format!("	movl    $0, %eax\n").as_bytes()).unwrap();
+            f.write_all(format!("	setne   %al\n").as_bytes()).unwrap();
+            f.write_all(format!("_end{}:\n",&current_end).as_bytes()).unwrap();
+            }
+        },
         parser::Exp::BinOp(op, exp1, exp2) =>
         {
             generate_exp(*exp1, &f, filename);
@@ -102,6 +150,42 @@ pub fn generate_binop(op:parser::BinaryOp, mut f: &File, filename: &str) -> ()
         {
             f.write_all(format!("    cdq\n").as_bytes()).unwrap();
             f.write_all(format!("    idivl   %ecx, %eax\n").as_bytes()).unwrap();
+        },
+        parser::BinaryOp::LessThan => 
+        {
+            f.write_all(format!("    cmpl    %ecx, %eax\n").as_bytes()).unwrap();
+            f.write_all(format!("    movl    $0, %eax\n").as_bytes()).unwrap();
+            f.write_all(format!("    setl    %al\n").as_bytes()).unwrap();
+        },
+        parser::BinaryOp::GreaterThan => 
+        {
+            f.write_all(format!("    cmpl    %ecx, %eax\n").as_bytes()).unwrap();
+            f.write_all(format!("    movl    $0, %eax\n").as_bytes()).unwrap();
+            f.write_all(format!("    setg    %al\n").as_bytes()).unwrap();
+        },
+        parser::BinaryOp::LessThanOrEq  => 
+        {
+            f.write_all(format!("    cmpl    %ecx, %eax\n").as_bytes()).unwrap();
+            f.write_all(format!("    movl    $0, %eax\n").as_bytes()).unwrap();
+            f.write_all(format!("    setle    %al\n").as_bytes()).unwrap();
+        },
+        parser::BinaryOp::GreaterThanOrEq  => 
+        {
+            f.write_all(format!("    cmpl    %ecx, %eax\n").as_bytes()).unwrap();
+            f.write_all(format!("    movl    $0, %eax\n").as_bytes()).unwrap();
+            f.write_all(format!("    setge   %al\n").as_bytes()).unwrap();
+        },
+        parser::BinaryOp::NotEqual => 
+        {
+            f.write_all(format!("    cmpl    %ecx, %eax\n").as_bytes()).unwrap();
+            f.write_all(format!("    movl    $0, %eax\n").as_bytes()).unwrap();
+            f.write_all(format!("    setne   %al\n").as_bytes()).unwrap();
+        },
+        parser::BinaryOp::Equal => 
+        {
+            f.write_all(format!("    cmpl    %ecx, %eax\n").as_bytes()).unwrap();
+            f.write_all(format!("    movl    $0, %eax\n").as_bytes()).unwrap();
+            f.write_all(format!("    sete    %al\n").as_bytes()).unwrap();
         },
         _=> parse_error("Not a valid binary op", filename),
     }

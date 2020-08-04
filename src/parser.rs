@@ -30,25 +30,26 @@ pub enum BinaryOp
     Subtraction,
     Multiplication,
     Division,
+    LessThan,
+    GreaterThan,
+    LessThanOrEq,
+    GreaterThanOrEq,
+    NotEqual,
+    Equal,
+    LogOr,
+    LogAnd,
 }
 
-pub fn is_unop(token: &lexer::Token) -> bool
-{
-    match token
-    {
-        lexer::Token::Minus | lexer::Token::Complement | lexer::Token:: LogNegation => true,
-        _ => false,
-    }
-}
 
-pub fn parse_factor(mut token_vec: &mut VecDeque<lexer::Token>) -> Exp
+
+pub fn parse_factor(token_vec: &mut VecDeque<lexer::Token>) -> Exp 
 {
     let tok = token_vec.pop_front().expect("token list empty(NONE)");
-
+    
     if let lexer::Token::OpenParen = tok
     {
         debug_print!("OpenParen");
-        let inner_exp = parse_exp(&mut token_vec);
+        let inner_exp = parse_exp(token_vec);
         if let Some(lexer::Token::ClosedParen) = token_vec.pop_front() 
         {
             debug_print!("ClosedParen");
@@ -62,7 +63,7 @@ pub fn parse_factor(mut token_vec: &mut VecDeque<lexer::Token>) -> Exp
     else if is_unop(&tok)
     {
         let op = get_unop(&tok);
-        let inner_exp = parse_factor(&mut token_vec);
+        let inner_exp = parse_factor(token_vec);
         return Exp::UnOp(op, Box::new(inner_exp)) 
     }
     else if let lexer::Token::IntegerLiteral(n) = tok
@@ -76,58 +77,176 @@ pub fn parse_factor(mut token_vec: &mut VecDeque<lexer::Token>) -> Exp
     }  
 }
 
-pub fn parse_muldiv(mut token_vec: &mut VecDeque<lexer::Token>) -> Exp
+pub fn is_unop(token: &lexer::Token) -> bool
 {
-    let mut term = parse_factor(&mut token_vec);
-    let mut next = token_vec.get(0).expect("empty token vector list");
-    while let lexer::Token::Multiplication | lexer::Token::Division = next
+    match token
     {
-        let op = get_binop(token_vec.pop_front().expect("empty token vector list, binop"));
-        let next_term = parse_factor(&mut token_vec);
-        term = Exp::BinOp(op, Box::new(term), Box::new(next_term));
-        next = token_vec.get(0).expect("empty token vector list");
+        lexer::Token::Minus | lexer::Token::Complement | lexer::Token:: LogNegation => true,
+        _ => false,
     }
-    term 
 }
 
-pub fn parse_addsub(mut token_vec: &mut VecDeque<lexer::Token>) -> Exp
+//TODO: rewrite parse_expression functions to generic passing in function arg and string
+pub fn parse_logor(token_vec: &mut VecDeque<lexer::Token>) -> Exp 
 {
-    let mut term = parse_muldiv(&mut token_vec); // 2 + 3 * 4
-    let mut next = token_vec.get(0).expect("empty token vector list");
+    let mut term = parse_logand(token_vec); // 2 + 3 * 4
+    let mut next = token_vec.get(0).expect("empty token vector list, logical or");
+    while let lexer::Token::LogOr = next
+    {
+        let op = get_binop(token_vec.pop_front().expect("empty token vector list, logical or"));
+        let next_term = parse_logand(token_vec);
+        term = Exp::BinOp(op, Box::new(term), Box::new(next_term));
+        next = token_vec.get(0).expect("empty token vector list, logical or");
+    }
+    term  
+}
+
+pub fn parse_logand(token_vec: &mut VecDeque<lexer::Token>) -> Exp
+{
+    let mut term = parse_equality(token_vec); // 2 + 3 * 4
+    let mut next = token_vec.get(0).expect("empty token vector list, logical and");
+    while let lexer::Token::LogAnd = next
+    {
+        let op = get_binop(token_vec.pop_front().expect("empty token vector list, logical and"));
+        let next_term = parse_equality(token_vec);
+        term = Exp::BinOp(op, Box::new(term), Box::new(next_term));
+        next = token_vec.get(0).expect("empty token vector list, logical and");
+    }
+    term  
+}
+
+pub fn parse_equality(token_vec: &mut VecDeque<lexer::Token>) -> Exp
+{
+    let mut term = parse_relation(token_vec); // 2 + 3 * 4
+    let mut next = token_vec.get(0).expect("empty token vector list, equality");
+    while let lexer::Token::Equal | lexer::Token::NotEqual = next
+    {
+        let op = get_binop(token_vec.pop_front().expect("empty token vector list, equality"));
+        let next_term = parse_relation(token_vec);
+        term = Exp::BinOp(op, Box::new(term), Box::new(next_term));
+        next = token_vec.get(0).expect("empty token vector list, equality");
+    }
+    term  
+}
+
+
+pub fn parse_relation(token_vec: &mut VecDeque<lexer::Token>) -> Exp
+{
+    let mut term = parse_addsub(token_vec); // 2 + 3 * 4
+    let mut next = token_vec.get(0).expect("empty token vector list, relation");
+    while let lexer::Token::LessThan | lexer::Token::GreaterThan | lexer::Token::LessThanOrEq | lexer::Token::GreaterThanOrEq = next
+    {
+        let op = get_binop(token_vec.pop_front().expect("empty token vector list, relation"));
+        let next_term = parse_addsub(token_vec);
+        term = Exp::BinOp(op, Box::new(term), Box::new(next_term));
+        next = token_vec.get(0).expect("empty token vector list, relation");
+    }
+    term  
+}
+
+pub fn parse_addsub(token_vec: &mut VecDeque<lexer::Token>) -> Exp
+{
+    let mut term = parse_muldiv(token_vec); // 2 + 3 * 4
+    let mut next = token_vec.get(0).expect("empty token vector list, addsub");
     while let lexer::Token::Addition | lexer::Token::Minus = next
     {
-        let op = get_binop(token_vec.pop_front().expect("empty token vector list, binop"));
-        let next_term = parse_muldiv(&mut token_vec);
+        let op = get_binop(token_vec.pop_front().expect("empty token vector list, addsub"));
+        let next_term = parse_muldiv(token_vec);
         term = Exp::BinOp(op, Box::new(term), Box::new(next_term));
-        next = token_vec.get(0).expect("empty token vector list");
+        next = token_vec.get(0).expect("empty token vector list, addsub");
     }
     term
 }
 
+pub fn parse_muldiv(token_vec: &mut VecDeque<lexer::Token>) -> Exp
+{
+    let mut term = parse_factor(token_vec);
+    let mut next = token_vec.get(0).expect("empty token vector list, muldiv");
+    while let lexer::Token::Multiplication | lexer::Token::Division = next
+    {
+        let op = get_binop(token_vec.pop_front().expect("empty token vector list, muldiv"));
+        let next_term = parse_factor(token_vec);
+        term = Exp::BinOp(op, Box::new(term), Box::new(next_term));
+        next = token_vec.get(0).expect("empty token vector list, muldiv");
+    }
+    term 
+}
+
+
 pub fn get_binop(token: lexer::Token) -> BinaryOp
 {
+    /*
+
+        lexer::Token:: =>
+        {
+            debug_print!("");
+            BinaryOp::
+        },
+
+
+    */
     match token
     {
         lexer::Token::Addition =>
         {
             debug_print!("Addition");
             BinaryOp::Addition
-        }
+        },
         lexer::Token::Minus =>
         {
             debug_print!("Subtraction");
             BinaryOp::Subtraction
-        }
+        },
         lexer::Token::Multiplication =>
         {
             debug_print!("Multiplication");
             BinaryOp::Multiplication
-        }
+        },
         lexer::Token::Division =>
         {
             debug_print!("Division");
             BinaryOp::Division
-        }
+        },
+        lexer::Token::LessThan =>
+        {
+            debug_print!("LessThan");
+            BinaryOp::LessThan
+        },
+        lexer::Token::GreaterThan =>
+        {
+            debug_print!("GreaterThan");
+            BinaryOp::GreaterThan
+        },
+        lexer::Token::LessThanOrEq =>
+        {
+            debug_print!("LessThanOrEq");
+            BinaryOp::LessThanOrEq
+        },
+        lexer::Token::GreaterThanOrEq =>
+        {
+            debug_print!("GreaterThanOrEq");
+            BinaryOp::GreaterThanOrEq
+        },
+        lexer::Token::NotEqual =>
+        {
+            debug_print!("NotEqual");
+            BinaryOp::NotEqual
+        },
+        lexer::Token::Equal =>
+        {
+            debug_print!("Equal");
+            BinaryOp::Equal
+        },
+        lexer::Token::LogOr =>
+        {
+            debug_print!("LogOr");
+            BinaryOp::LogOr
+        },
+        lexer::Token::LogAnd =>
+        {
+            debug_print!("LogAnd");
+            BinaryOp::LogAnd
+        },
         _ => panic!("not valid binary operator"),
     }
 }
@@ -154,28 +273,28 @@ pub fn get_unop(token: &lexer::Token) -> UnaryOp
     }
 }
 
-pub fn parse_exp (mut token_vec:&mut VecDeque<lexer::Token>) -> Exp
+pub fn parse_exp (token_vec:&mut VecDeque<lexer::Token>) -> Exp
 {
-    parse_addsub(&mut token_vec)
+    parse_logor(token_vec)
 } 
 
 
-pub fn parse_statement(mut token_vec:&mut VecDeque<lexer::Token>) -> Statement
+pub fn parse_statement(token_vec:&mut VecDeque<lexer::Token>) -> Statement
 {
     //Return <Int>;
-    match_token(&mut token_vec, lexer::Token::ReturnKeyword);
+    match_token(token_vec, lexer::Token::ReturnKeyword);
 
-    let statement_exp:Exp = parse_exp(&mut token_vec);
+    let statement_exp:Exp = parse_exp(token_vec);
 
-    match_token(&mut token_vec, lexer::Token::Semicolon);
+    match_token(token_vec, lexer::Token::Semicolon);
 
     Statement::Return(statement_exp)
 }  
 
-pub fn parse_fun_decl(mut token_vec: VecDeque<lexer::Token>) -> FunDecl
+pub fn parse_fun_decl(token_vec:&mut VecDeque<lexer::Token>) -> FunDecl
 {
     //int <func_name> () {<statement>}
-    match_token(&mut token_vec, lexer::Token::IntKeyword);
+    match_token(token_vec, lexer::Token::IntKeyword);
 
     let id = token_vec.pop_front();
     let fun_string: String;
@@ -185,20 +304,20 @@ pub fn parse_fun_decl(mut token_vec: VecDeque<lexer::Token>) -> FunDecl
         _ => panic!("not valid identifier"),
     }
 
-    match_token(&mut token_vec, lexer::Token::OpenParen);
+    match_token(token_vec, lexer::Token::OpenParen);
 
-    match_token(&mut token_vec, lexer::Token::ClosedParen);
+    match_token(token_vec, lexer::Token::ClosedParen);
     
-    match_token(&mut token_vec, lexer::Token::OpenBrace);
+    match_token(token_vec, lexer::Token::OpenBrace);
     
-    let prog_statement = parse_statement(&mut token_vec); 
+    let prog_statement = parse_statement(token_vec); 
 
-    match_token(&mut token_vec, lexer::Token::ClosedBrace);
+    match_token(token_vec, lexer::Token::ClosedBrace);
 
     FunDecl::Fun(fun_string, prog_statement) 
 }
 
-pub fn parse_program(token_vec:VecDeque<lexer::Token>) -> Program
+pub fn parse_program(token_vec:&mut VecDeque<lexer::Token>) -> Program
 {
     Program::Prog(parse_fun_decl(token_vec))
 }
@@ -268,8 +387,8 @@ impl fmt::Display for Exp
         match self
         {
             Exp::Const(n) => write!(f, "Int<{}>", n),
-            Exp::UnOp(x,y) => write!(f, "UnOp<{}> {}", x, *y),
-            Exp::BinOp(x,y,z) => write!(f, "{} BinaryOp<{}> {}", *y, x, *z),
+            Exp::UnOp(x,y) => write!(f, "(UnOp<{}> {})", x, *y),
+            Exp::BinOp(x,y,z) => write!(f, "({} BinaryOp<{}> {})", *y, x, *z),
             _ => panic!("invalid expression"),
         }
     }
@@ -299,6 +418,14 @@ impl fmt::Display for BinaryOp
             BinaryOp::Subtraction => write!(f, "Subtraction"),
             BinaryOp::Multiplication => write!(f, "Multiplication"),
             BinaryOp::Division => write!(f, "Division"),
+            BinaryOp::LessThan => write!(f, "LessThan"),
+            BinaryOp::GreaterThan => write!(f, "GreaterThan"),
+            BinaryOp::LessThanOrEq => write!(f, "LessThanOrEq"),
+            BinaryOp::GreaterThanOrEq => write!(f, "GreaterThanOrEq"),
+            BinaryOp::NotEqual => write!(f, "NotEqual"),
+            BinaryOp::Equal => write!(f, "Equal"),
+            BinaryOp::LogOr => write!(f, "LogOr"),
+            BinaryOp::LogAnd => write!(f, "LogAnd"),
             _ => panic!("invalid binary operator"),
         }
     }

@@ -20,6 +20,14 @@ use std::fmt;
     Addition,
     Multiplication,
     Division,
+    LogAnd,
+    LogOr,
+    Equal,
+    NotEqual,
+    LessThan,
+    LessThanOrEq,
+    GreaterThan,
+    GreaterThanOrEq,
 }
  
 
@@ -31,7 +39,7 @@ pub fn read_file(file_name: &str) -> String
 
 pub fn parse_string(x: &str) -> VecDeque<Token>
 {
-    let re = Regex::new(r#"^\{|^\}|^\(|^\)|^;|^-|^~|^!|^\+|^\*|^/"#).unwrap();
+    let re = Regex::new(r#"^\{|^\}|^\(|^\)|^;|^-|^~|^\+|^\*|^/|^&&|^\|\||^==|^!=|^<=|^<|^>=|^>|^!"#).unwrap();
     let int_reg = Regex::new(r#"^[0-9]+"#).unwrap();
     let char_reg = Regex::new(r#"^[a-zA-Z]\w*"#).unwrap();
 
@@ -45,6 +53,7 @@ pub fn parse_string(x: &str) -> VecDeque<Token>
         {
             next_match =  re.find(&temp).unwrap().as_str();
             match next_match {
+                //"" =>  matches.push_back(Token::),
                 "{" => matches.push_back(Token::OpenBrace),
                 "}" => matches.push_back(Token::ClosedBrace),
                 "(" => matches.push_back(Token::OpenParen),
@@ -56,6 +65,14 @@ pub fn parse_string(x: &str) -> VecDeque<Token>
                 "+" => matches.push_back(Token::Addition),
                 "*" => matches.push_back(Token::Multiplication),
                 "/" => matches.push_back(Token::Division),
+                "&&" =>  matches.push_back(Token::LogAnd),
+                "||" =>  matches.push_back(Token::LogOr),
+                "==" =>  matches.push_back(Token::Equal),
+                "!=" =>  matches.push_back(Token::NotEqual),
+                ">" =>  matches.push_back(Token::GreaterThan),
+                "<" =>  matches.push_back(Token::LessThan),
+                "<=" =>  matches.push_back(Token::LessThanOrEq),
+                ">=" =>  matches.push_back(Token::GreaterThanOrEq),
                 _ => panic!("{} is not a valid token", next_match),
             }
             debug_print!("{}", next_match);
@@ -92,6 +109,7 @@ impl fmt::Display for Token
     {
         match self
         {
+            //Token:: => write!(f, ""),
             Token::OpenBrace => write!(f,"OpenBrace"),
             Token::ClosedBrace => write!(f,"ClosedBrace"),
             Token::OpenParen =>  write!(f,"OpenParen"),
@@ -107,6 +125,14 @@ impl fmt::Display for Token
             Token::Addition => write!(f, "Addition"),
             Token::Multiplication => write!(f, "Multiplication"),
             Token::Division => write!(f, "Division"),
+            Token::LogAnd => write!(f, "LogAnd"),
+            Token::LogOr => write!(f, "LogOr"),
+            Token::Equal => write!(f, "Equal"),
+            Token::NotEqual => write!(f, "NotEqual"),
+            Token::LessThan => write!(f, "LessThan"),
+            Token::LessThanOrEq => write!(f, "LessThanOrEq"),
+            Token::GreaterThan => write!(f, "GreaterThan"),
+            Token::GreaterThanOrEq => write!(f, "GreaterThanOrEq"),
             _ => panic!("Invalid token"),
         }
     }
